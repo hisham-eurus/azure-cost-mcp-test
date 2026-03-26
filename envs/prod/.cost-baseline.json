@@ -1,0 +1,107 @@
+{
+  "savedAt": "2026-03-26T08:30:50.168Z",
+  "tfvarsPath": "envs/prod/terraform.tfvars",
+  "totalMonthly": 10183.6,
+  "resources": [
+    {
+      "label": "VM / Node Pool: system_node_vm_size (Standard_D2s_v3) ×5",
+      "family": "vm",
+      "count": 5,
+      "billingModel": "hourly",
+      "unitPrice": 0.096,
+      "monthlyPrice": 350.4
+    },
+    {
+      "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×5",
+      "family": "vm",
+      "count": 5,
+      "billingModel": "hourly",
+      "unitPrice": 0.376,
+      "monthlyPrice": 1372.3999999999999
+    },
+    {
+      "label": "AKS Management Fee (Standard tier) ×1 cluster",
+      "family": "aks",
+      "count": 1,
+      "billingModel": "flat-per-hour",
+      "unitPrice": 0.1,
+      "monthlyPrice": 73
+    },
+    {
+      "label": "OS Disk (Premium_LRS) ×3",
+      "family": "disk",
+      "count": 3,
+      "sizeGb": 128,
+      "billingModel": "per-gb-month",
+      "unitPrice": 19.71,
+      "monthlyPrice": 7568.64
+    },
+    {
+      "label": "Data Disk (StandardSSD_LRS) ×2",
+      "family": "disk",
+      "count": 2,
+      "sizeGb": 256,
+      "billingModel": "per-gb-month",
+      "unitPrice": 0.91,
+      "monthlyPrice": 465.92
+    },
+    {
+      "label": "Load Balancer (Standard) ×1, 5 rules",
+      "family": "loadbalancer",
+      "count": 5,
+      "billingModel": "per-rule-hour",
+      "unitPrice": 0,
+      "monthlyPrice": 0
+    },
+    {
+      "label": "Public IP (Standard) ×2",
+      "family": "publicip",
+      "count": 2,
+      "billingModel": "flat-per-hour",
+      "unitPrice": 0.006,
+      "monthlyPrice": 8.76
+    },
+    {
+      "label": "Blob Storage (Hot LRS) 500 GB ×1",
+      "family": "storage",
+      "count": 1,
+      "sizeGb": 500,
+      "billingModel": "per-gb-month",
+      "unitPrice": 0.0208,
+      "monthlyPrice": 10.4
+    },
+    {
+      "label": "PostgreSQL Flexible Server (Standard_D2s_v3) ×3",
+      "family": "postgres",
+      "count": 3,
+      "billingModel": "hourly",
+      "unitPrice": 0.075,
+      "monthlyPrice": 164.24999999999997
+    },
+    {
+      "label": "MySQL Flexible Server (Standard_D2s_v3) ×3",
+      "family": "mysql",
+      "count": 3,
+      "billingModel": "hourly",
+      "unitPrice": 0.075,
+      "monthlyPrice": 164.24999999999997
+    },
+    {
+      "label": "NAT Gateway ×1",
+      "family": "natgateway",
+      "count": 1,
+      "billingModel": "flat-per-hour",
+      "unitPrice": 0.006,
+      "monthlyPrice": 4.38
+    },
+    {
+      "label": "VNet Peering ×2 (est. 100 GB/month)",
+      "family": "vnet",
+      "count": 2,
+      "sizeGb": 100,
+      "billingModel": "per-gb-month",
+      "unitPrice": 0.006,
+      "monthlyPrice": 1.2
+    }
+  ]
+}
