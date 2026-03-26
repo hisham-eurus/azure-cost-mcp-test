@@ -91,10 +91,10 @@ jobs:
         env:
           # ✏️  SET YOUR THRESHOLDS HERE
           # Percentage: block if monthly cost increases by more than X%
-          COST_INCREASE_THRESHOLD_PCT: "5"
+          COST_INCREASE_THRESHOLD_PCT: "20"
           # Absolute: block if monthly cost increases by more than $X/month
           # Set to 0 to disable absolute threshold
-          COST_INCREASE_THRESHOLD_ABS: "50"
+          COST_INCREASE_THRESHOLD_ABS: "500"
         run: |
           FULL_MARKDOWN=""
           BLOCKED=false
