@@ -1,23 +1,23 @@
 {
-  "savedAt": "2026-03-26T08:30:51.141Z",
+  "savedAt": "2026-03-26T08:53:13.829Z",
   "tfvarsPath": "envs/staging/terraform.tfvars",
-  "totalMonthly": 10183.6,
+  "totalMonthly": 10163.17334,
   "resources": [
     {
-      "label": "VM / Node Pool: system_node_vm_size (Standard_D2s_v3) ×5",
+      "label": "VM / Node Pool: system_node_vm_size (Standard_D2s_v3) ×3",
       "family": "vm",
-      "count": 5,
+      "count": 3,
       "billingModel": "hourly",
       "unitPrice": 0.096,
-      "monthlyPrice": 350.4
+      "monthlyPrice": 210.24000000000004
     },
     {
-      "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×5",
+      "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×3",
       "family": "vm",
-      "count": 5,
+      "count": 3,
       "billingModel": "hourly",
       "unitPrice": 0.376,
-      "monthlyPrice": 1372.3999999999999
+      "monthlyPrice": 823.44
     },
     {
       "label": "AKS Management Fee (Standard tier) ×1 cluster",
@@ -62,29 +62,37 @@
       "monthlyPrice": 8.76
     },
     {
-      "label": "Blob Storage (Hot LRS) 500 GB ×1",
+      "label": "Blob Storage (Hot GRS) 500 GB ×1",
       "family": "storage",
       "count": 1,
       "sizeGb": 500,
       "billingModel": "per-gb-month",
-      "unitPrice": 0.0208,
-      "monthlyPrice": 10.4
+      "unitPrice": 0.046,
+      "monthlyPrice": 23
     },
     {
-      "label": "PostgreSQL Flexible Server (Standard_D2s_v3) ×3",
+      "label": "PostgreSQL Flexible Server (Standard_D4s_v3) ×2",
       "family": "postgres",
-      "count": 3,
+      "count": 2,
       "billingModel": "hourly",
-      "unitPrice": 0.075,
-      "monthlyPrice": 164.24999999999997
+      "unitPrice": 0.376,
+      "monthlyPrice": 548.96
     },
     {
-      "label": "MySQL Flexible Server (Standard_D2s_v3) ×3",
+      "label": "MySQL Flexible Server (Standard_D2s_v3) ×1",
       "family": "mysql",
-      "count": 3,
+      "count": 1,
       "billingModel": "hourly",
       "unitPrice": 0.075,
-      "monthlyPrice": 164.24999999999997
+      "monthlyPrice": 54.75
+    },
+    {
+      "label": "Azure SQL Database (General Purpose, 4 vCores) ×1",
+      "family": "mssql",
+      "count": 1,
+      "billingModel": "hourly",
+      "unitPrice": 0.521758,
+      "monthlyPrice": 380.88334000000003
     },
     {
       "label": "NAT Gateway ×1",

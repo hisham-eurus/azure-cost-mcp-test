@@ -1,23 +1,23 @@
 {
-  "savedAt": "2026-03-26T08:30:50.168Z",
+  "savedAt": "2026-03-26T08:53:12.383Z",
   "tfvarsPath": "envs/prod/terraform.tfvars",
-  "totalMonthly": 10183.6,
+  "totalMonthly": 7035.84,
   "resources": [
     {
-      "label": "VM / Node Pool: system_node_vm_size (Standard_D2s_v3) ×5",
+      "label": "VM / Node Pool: system_node_vm_size (Standard_D4s_v3) ×2",
       "family": "vm",
-      "count": 5,
-      "billingModel": "hourly",
-      "unitPrice": 0.096,
-      "monthlyPrice": 350.4
-    },
-    {
-      "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×5",
-      "family": "vm",
-      "count": 5,
+      "count": 2,
       "billingModel": "hourly",
       "unitPrice": 0.376,
-      "monthlyPrice": 1372.3999999999999
+      "monthlyPrice": 548.96
+    },
+    {
+      "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×2",
+      "family": "vm",
+      "count": 2,
+      "billingModel": "hourly",
+      "unitPrice": 0.376,
+      "monthlyPrice": 548.96
     },
     {
       "label": "AKS Management Fee (Standard tier) ×1 cluster",
@@ -28,13 +28,13 @@
       "monthlyPrice": 73
     },
     {
-      "label": "OS Disk (Premium_LRS) ×3",
+      "label": "OS Disk (Premium_LRS) ×2",
       "family": "disk",
-      "count": 3,
+      "count": 2,
       "sizeGb": 128,
       "billingModel": "per-gb-month",
       "unitPrice": 19.71,
-      "monthlyPrice": 7568.64
+      "monthlyPrice": 5045.76
     },
     {
       "label": "Data Disk (StandardSSD_LRS) ×2",
