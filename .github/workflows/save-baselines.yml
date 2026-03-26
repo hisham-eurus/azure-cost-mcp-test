@@ -93,9 +93,8 @@ jobs:
             echo "No baseline changes to commit"
           else
             git commit -m "chore(cost): update baselines after merge [skip ci]
-
-Environments updated: ${{ steps.changed.outputs.envs }}
-Triggered by: ${{ github.sha }}"
+            Environments updated: ${{ steps.changed.outputs.envs }}
+            Triggered by: ${{ github.sha }}"
             git push
             echo "✅ Baselines committed to main"
           fi
