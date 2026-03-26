@@ -41,8 +41,8 @@ storage_access_tier      = "Hot"
 storage_size_gb          = 500
 
 # ── PostgreSQL Flexible Server ────────────────────────────────────────────────
-postgres_sku   = "Standard_D2s_v3"
-postgres_count = 1
+postgres_sku   = "Standard_D4s_v3"
+postgres_count = 2
 
 # ── MySQL Flexible Server ─────────────────────────────────────────────────────
 mysql_sku   = "Standard_D2s_v3"
