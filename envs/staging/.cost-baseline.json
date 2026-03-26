@@ -1,15 +1,15 @@
 {
-  "savedAt": "2026-03-26T08:53:13.829Z",
+  "savedAt": "2026-03-26T08:57:20.348Z",
   "tfvarsPath": "envs/staging/terraform.tfvars",
-  "totalMonthly": 10163.17334,
+  "totalMonthly": 10776.37334,
   "resources": [
     {
-      "label": "VM / Node Pool: system_node_vm_size (Standard_D2s_v3) ×3",
+      "label": "VM / Node Pool: system_node_vm_size (Standard_D4s_v3) ×3",
       "family": "vm",
       "count": 3,
       "billingModel": "hourly",
-      "unitPrice": 0.096,
-      "monthlyPrice": 210.24000000000004
+      "unitPrice": 0.376,
+      "monthlyPrice": 823.44
     },
     {
       "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×3",

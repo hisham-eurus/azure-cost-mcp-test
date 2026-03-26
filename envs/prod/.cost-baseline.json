@@ -1,23 +1,23 @@
 {
-  "savedAt": "2026-03-26T08:53:12.383Z",
+  "savedAt": "2026-03-26T08:57:19.248Z",
   "tfvarsPath": "envs/prod/terraform.tfvars",
-  "totalMonthly": 7035.84,
+  "totalMonthly": 8682.72,
   "resources": [
     {
-      "label": "VM / Node Pool: system_node_vm_size (Standard_D4s_v3) ×2",
+      "label": "VM / Node Pool: system_node_vm_size (Standard_D4s_v3) ×5",
       "family": "vm",
-      "count": 2,
+      "count": 5,
       "billingModel": "hourly",
       "unitPrice": 0.376,
-      "monthlyPrice": 548.96
+      "monthlyPrice": 1372.3999999999999
     },
     {
-      "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×2",
+      "label": "VM / Node Pool: node_vm_size (Standard_D4s_v3) ×5",
       "family": "vm",
-      "count": 2,
+      "count": 5,
       "billingModel": "hourly",
       "unitPrice": 0.376,
-      "monthlyPrice": 548.96
+      "monthlyPrice": 1372.3999999999999
     },
     {
       "label": "AKS Management Fee (Standard tier) ×1 cluster",
