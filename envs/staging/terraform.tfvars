@@ -45,13 +45,13 @@ postgres_sku   = "Standard_D2s_v3"
 postgres_count = 1
 
 # ── MySQL Flexible Server ─────────────────────────────────────────────────────
-# mysql_sku   = "Standard_D2s_v3"
-# mysql_count = 1
+mysql_sku   = "Standard_D2s_v3"
+mysql_count = 1
 
 # ── Azure SQL Database ────────────────────────────────────────────────────────
-# sql_tier   = "General Purpose"
-# sql_vcores = 4
-# sql_count  = 1
+sql_tier   = "General Purpose"
+sql_vcores = 4
+sql_count  = 1
 
 # ── NAT Gateway ───────────────────────────────────────────────────────────────
 enable_nat_gateway = true
