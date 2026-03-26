@@ -1,0 +1,38 @@
+name: Sync Azure Prices Weekly
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"   # Every Monday at 02:00 UTC
+  workflow_dispatch:        # Allow manual trigger
+
+jobs:
+  sync-prices:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run price sync
+        run: npx tsx scripts/sync-prices.ts
+
+      - name: Check if DB changed
+        id: diff
+        run: |
+          git diff --quiet db/prices.sqlite && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit updated price DB
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add db/prices.sqlite
+          git commit -m "chore: sync Azure retail prices [$(date -u '+%Y-%m-%d')]"
+          git push

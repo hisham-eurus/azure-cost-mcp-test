@@ -1,0 +1,233 @@
+name: Azure Cost Review
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      # Only run when tfvars files actually change
+      - "envs/**/**.tfvars"
+      - "envs/**/**.tfvars.json"
+
+# ── Permissions needed ────────────────────────────────────────────────────────
+# pull-requests: write  → post PR comments
+# statuses: write       → set commit status (for branch protection)
+# contents: read        → checkout code + read baselines from main
+permissions:
+  pull-requests: write
+  statuses: write
+  contents: read
+
+# ── Only run one cost check per PR at a time ──────────────────────────────────
+concurrency:
+  group: azure-cost-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  cost-review:
+    name: Cost Review
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout PR branch ───────────────────────────────────────────────
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed to diff against main
+
+      # ── 2. Setup Node ───────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ".github/azure-cost-mcp/package-lock.json"
+
+      # ── 3. Install MCP dependencies ─────────────────────────────────────────
+      - name: Install azure-cost-mcp dependencies
+        working-directory: .github/azure-cost-mcp
+        run: npm ci
+
+      # ── 4. Detect which tfvars files changed in this PR ─────────────────────
+      - name: Detect changed tfvars files
+        id: changed
+        run: |
+          # Get list of changed .tfvars files between PR branch and main
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'envs/**/*.tfvars' | tr '\n' ' ')
+          echo "files=${CHANGED}" >> $GITHUB_OUTPUT
+
+          # Extract unique environment folders (e.g. "envs/prod envs/staging")
+          ENVS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'envs/**/*.tfvars' \
+            | xargs -I{} dirname {} | sort -u | tr '\n' ' ')
+          echo "envs=${ENVS}" >> $GITHUB_OUTPUT
+
+          echo "Changed tfvars: ${CHANGED}"
+          echo "Affected envs: ${ENVS}"
+
+      # ── 5. Fetch baselines from main branch ─────────────────────────────────
+      # Baselines live in each env folder as .cost-baseline.json
+      # We read them from the BASE branch (main) — not the PR branch —
+      # so we always compare against the currently deployed state.
+      - name: Fetch baselines from main
+        if: steps.changed.outputs.envs != ''
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
+          # For each changed env, extract its baseline from main if it exists
+          for ENV_DIR in ${{ steps.changed.outputs.envs }}; do
+            BASELINE="${ENV_DIR}/.cost-baseline.json"
+            echo "Looking for baseline: ${BASELINE}"
+
+            # Try to get the file from main branch
+            git show origin/${{ github.base_ref }}:${BASELINE} > /tmp/baseline-$(basename ${ENV_DIR}).json 2>/dev/null \
+              && echo "✅ Found baseline for ${ENV_DIR}" \
+              || echo "ℹ️  No baseline yet for ${ENV_DIR} (first cost check)"
+          done
+
+      # ── 6. Run cost diff for each changed environment ───────────────────────
+      - name: Run cost analysis
+        id: cost
+        if: steps.changed.outputs.envs != ''
+        env:
+          # ✏️  SET YOUR THRESHOLDS HERE
+          # Percentage: block if monthly cost increases by more than X%
+          COST_INCREASE_THRESHOLD_PCT: "20"
+          # Absolute: block if monthly cost increases by more than $X/month
+          # Set to 0 to disable absolute threshold
+          COST_INCREASE_THRESHOLD_ABS: "500"
+        run: |
+          FULL_MARKDOWN=""
+          BLOCKED=false
+          BLOCK_REASONS=""
+          ANY_CHANGES=false
+
+          for ENV_DIR in ${{ steps.changed.outputs.envs }}; do
+            ENV_NAME=$(basename ${ENV_DIR})
+            TFVARS="${ENV_DIR}/terraform.tfvars"
+
+            # Support both terraform.tfvars and <env>.tfvars naming conventions
+            if [ ! -f "${TFVARS}" ]; then
+              TFVARS=$(ls ${ENV_DIR}/*.tfvars 2>/dev/null | head -1)
+            fi
+
+            if [ -z "${TFVARS}" ] || [ ! -f "${TFVARS}" ]; then
+              echo "⚠️  No tfvars found in ${ENV_DIR}, skipping"
+              continue
+            fi
+
+            ANY_CHANGES=true
+            BASELINE="/tmp/baseline-${ENV_NAME}.json"
+            OUTPUT_FILE="/tmp/cost-output-${ENV_NAME}.json"
+
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🌍 Environment: ${ENV_NAME}"
+            echo "📄 tfvars: ${TFVARS}"
+
+            # Run diff (or estimate if no baseline)
+            CI_OUTPUT_FILE=${OUTPUT_FILE} \
+              npx tsx .github/azure-cost-mcp/scripts/ci.ts \
+              diff "${TFVARS}" "${BASELINE}" "${ENV_NAME}" || true
+
+            # Read the structured output
+            if [ -f "${OUTPUT_FILE}" ]; then
+              ENV_MARKDOWN=$(cat ${OUTPUT_FILE} | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('markdown',''))")
+              ENV_BLOCKED=$(cat ${OUTPUT_FILE} | python3 -c "import sys,json; d=json.load(sys.stdin); print(str(d.get('blocked',False)).lower())")
+
+              FULL_MARKDOWN="${FULL_MARKDOWN}\n\n---\n\n${ENV_MARKDOWN}"
+
+              if [ "${ENV_BLOCKED}" = "true" ]; then
+                BLOCKED=true
+                ENV_REASON=$(cat ${OUTPUT_FILE} | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('blockReason',''))")
+                BLOCK_REASONS="${BLOCK_REASONS}\n- **${ENV_NAME}**: ${ENV_REASON}"
+              fi
+            fi
+          done
+
+          if [ "${ANY_CHANGES}" = "false" ]; then
+            echo "No tfvars files found in changed environments"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Write combined outputs
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "blocked=${BLOCKED}" >> $GITHUB_OUTPUT
+          printf "%s" "${FULL_MARKDOWN}" > /tmp/full-markdown.md
+          printf "%s" "${BLOCK_REASONS}" > /tmp/block-reasons.md
+
+      # ── 7. Post PR comment ──────────────────────────────────────────────────
+      - name: Post cost review comment
+        if: steps.cost.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const blocked    = '${{ steps.cost.outputs.blocked }}' === 'true';
+            const markdown   = fs.readFileSync('/tmp/full-markdown.md', 'utf8');
+            const blockText  = fs.existsSync('/tmp/block-reasons.md')
+              ? fs.readFileSync('/tmp/block-reasons.md', 'utf8') : '';
+
+            const header = blocked
+              ? `## ⛔ Azure Cost Review — Merge Blocked\n\n${blockText}\n\nA reviewer with **cost-override** permission must approve before merging.\n`
+              : `## ✅ Azure Cost Review — Passed\n`;
+
+            const body = `${header}\n${markdown}\n\n<sub>Generated by [azure-cost-mcp](/.github/azure-cost-mcp) · Commit \`${{ github.sha }}\`</sub>`;
+
+            // Find existing cost review comment (update instead of creating a new one each push)
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('Azure Cost Review')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+              console.log('Updated existing cost review comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+              console.log('Created new cost review comment');
+            }
+
+      # ── 8. Set commit status (used by branch protection) ────────────────────
+      - name: Set commit status
+        if: steps.cost.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const blocked = '${{ steps.cost.outputs.blocked }}' === 'true';
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: blocked ? 'failure' : 'success',
+              context: 'Azure Cost Review',
+              description: blocked
+                ? 'Cost increase exceeds threshold — requires approval'
+                : 'Cost change within acceptable threshold',
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${{ github.event.pull_request.number }}`,
+            });
+
+      # ── 9. Fail the job if blocked (makes the check red in the PR) ──────────
+      - name: Fail if cost threshold exceeded
+        if: steps.cost.outputs.blocked == 'true'
+        run: |
+          echo "::error::Cost increase exceeds threshold. See PR comment for details."
+          echo "To override: add the 'cost-approved' label to the PR and re-run this workflow."
+          exit 1

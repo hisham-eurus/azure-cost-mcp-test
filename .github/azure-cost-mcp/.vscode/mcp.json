@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "azure-cost-mcp": {
+      "command": "npx",
+      "args": ["tsx", "${workspaceFolder}/src/index.ts"],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,101 @@
+name: Save Cost Baselines
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+# Runs after a PR is merged to main that touched tfvars files.
+# Saves a fresh .cost-baseline.json for each changed environment.
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "envs/**/**.tfvars"
+
+permissions:
+  contents: write   # needed to commit baseline files back to main
+
+jobs:
+  save-baselines:
+    name: Save Cost Baselines
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # need previous commit to detect what changed
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ".github/azure-cost-mcp/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: .github/azure-cost-mcp
+        run: npm ci
+
+      # Detect which env folders changed in this push (the merged PR)
+      - name: Detect changed environments
+        id: changed
+        run: |
+          ENVS=$(git diff --name-only HEAD~1 HEAD -- 'envs/**/*.tfvars' \
+            | xargs -I{} dirname {} | sort -u | tr '\n' ' ')
+          echo "envs=${ENVS}" >> $GITHUB_OUTPUT
+          echo "Changed environments: ${ENVS}"
+
+      # Save a fresh baseline for each changed environment
+      - name: Save baselines
+        if: steps.changed.outputs.envs != ''
+        run: |
+          SAVED=""
+
+          for ENV_DIR in ${{ steps.changed.outputs.envs }}; do
+            ENV_NAME=$(basename ${ENV_DIR})
+
+            # Find the tfvars file
+            TFVARS="${ENV_DIR}/terraform.tfvars"
+            if [ ! -f "${TFVARS}" ]; then
+              TFVARS=$(ls ${ENV_DIR}/*.tfvars 2>/dev/null | head -1)
+            fi
+
+            if [ -z "${TFVARS}" ] || [ ! -f "${TFVARS}" ]; then
+              echo "⚠️  No tfvars found in ${ENV_DIR}, skipping"
+              continue
+            fi
+
+            BASELINE="${ENV_DIR}/.cost-baseline.json"
+            echo "💾 Saving baseline for ${ENV_NAME} → ${BASELINE}"
+
+            npx tsx .github/azure-cost-mcp/scripts/ci.ts \
+              baseline "${TFVARS}" "${BASELINE}" "${ENV_NAME}"
+
+            SAVED="${SAVED} ${BASELINE}"
+          done
+
+          echo "saved_files=${SAVED}" >> $GITHUB_OUTPUT
+
+      # Commit the updated baselines back to main
+      - name: Commit baselines to main
+        if: steps.changed.outputs.envs != ''
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage all updated baselines
+          for ENV_DIR in ${{ steps.changed.outputs.envs }}; do
+            BASELINE="${ENV_DIR}/.cost-baseline.json"
+            [ -f "${BASELINE}" ] && git add "${BASELINE}"
+          done
+
+          # Only commit if there are actual changes
+          if git diff --staged --quiet; then
+            echo "No baseline changes to commit"
+          else
+            git commit -m "chore(cost): update baselines after merge [skip ci]
+
+Environments updated: ${{ steps.changed.outputs.envs }}
+Triggered by: ${{ github.sha }}"
+            git push
+            echo "✅ Baselines committed to main"
+          fi
