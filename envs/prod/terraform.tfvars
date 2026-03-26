@@ -10,12 +10,12 @@ environment = "production"
 
 # ── AKS Node Pools ────────────────────────────────────────────────────────────
 # System node pool (always-on, runs kube-system pods)
-system_node_vm_size = "Standard_D8s_v3"
-system_node_count   = 6
+system_node_vm_size = "Standard_D2s_v3"
+system_node_count   = 5
 
 # User node pool (application workloads)
-node_vm_size  = "Standard_D8s_v3"
-node_count    = 10
+node_vm_size  = "Standard_D4s_v3"
+node_count    = 5
 
 # AKS management tier: "Free" = $0, "Standard" = ~$0.10/hr/cluster
 aks_sku_tier  = "Standard"
@@ -38,14 +38,14 @@ public_ip_sku      = "Standard"
 # ── Blob Storage ─────────────────────────────────────────────────────────────
 storage_replication_type = "GRS"
 storage_access_tier      = "Hot"
-storage_size_gb          = 1000
+storage_size_gb          = 500
 
 # ── PostgreSQL Flexible Server ────────────────────────────────────────────────
-postgres_sku   = "Standard_D8s_v3"
+postgres_sku   = "Standard_D2s_v3"
 postgres_count = 3
 
 # ── MySQL Flexible Server ─────────────────────────────────────────────────────
-mysql_sku   = "Standard_D4s_v3"
+mysql_sku   = "Standard_D2s_v3"
 mysql_count = 3
 
 # ── Azure SQL Database ────────────────────────────────────────────────────────
