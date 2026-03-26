@@ -11,7 +11,7 @@ environment = "production"
 # ── AKS Node Pools ────────────────────────────────────────────────────────────
 # System node pool (always-on, runs kube-system pods)
 system_node_vm_size = "Standard_D4s_v3"
-system_node_count   = 2
+system_node_count   = 5
 
 # User node pool (application workloads)
 node_vm_size  = "Standard_D4s_v3"
